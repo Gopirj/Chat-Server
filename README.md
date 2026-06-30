@@ -137,9 +137,11 @@
                   │
                   ▼
               while True
+```
 
 ### Broadcast Function Flow
 
+```text
 broadcast(server_socket,
           client_socket,
           message)
@@ -174,7 +176,7 @@ broadcast(server_socket,
                          │
                          ▼
                      Continue
-```text
+```
               
 ## Overall Chat Server Architecture Explanation
 
@@ -205,6 +207,124 @@ broadcast(server_socket,
          ▼                ▼
      Client 2         Client 3
    Receives Msg     Receives Msg
+```
+
+### 2. Client side chat 
+```text
+┌─────────────────────────┐
+│          START          │
+└────────────┬────────────┘
+             │
+             ▼
+┌─────────────────────────┐
+│ Import Required Modules │
+│ sys, socket, select     │
+└────────────┬────────────┘
+             │
+             ▼
+┌─────────────────────────┐
+│ Check Command Line Args │
+│ len(sys.argv) < 3 ?     │
+└────────────┬────────────┘
+             │
+      ┌──────┴──────┐
+      │             │
+     YES            NO
+      │             │
+      ▼             ▼
+┌─────────────────┐  ┌────────────────────┐
+│ Print Usage Msg │  │ Read Host & Port   │
+└─────────────────┘  └─────────┬──────────┘
+                               │
+                               ▼
+                  ┌────────────────────────┐
+                  │ Create TCP Socket      │
+                  │ socket(AF_INET,        │
+                  │ SOCK_STREAM)           │
+                  └───────────┬────────────┘
+                              │
+                              ▼
+                  ┌────────────────────────┐
+                  │ Set Timeout = 5 Sec    │
+                  └───────────┬────────────┘
+                              │
+                              ▼
+                  ┌────────────────────────┐
+                  │ Connect to Server      │
+                  │ s.connect(host,port)   │
+                  └───────────┬────────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    │                   │
+                 FAILED             SUCCESS
+                    │                   │
+                    ▼                   ▼
+         ┌─────────────────┐   ┌─────────────────┐
+         │ Print Error Msg │   │ Print Connected │
+         │ Exit Program    │   │ Message         │
+         └─────────────────┘   └────────┬────────┘
+                                         │
+                                         ▼
+                          ┌────────────────────────┐
+                          │ Show Prompt ">"        │
+                          └───────────┬────────────┘
+                                      │
+                                      ▼
+                         ┌─────────────────────────┐
+                         │      while True         │
+                         └───────────┬─────────────┘
+                                     │
+                                     ▼
+                    ┌────────────────────────────────┐
+                    │ select() Waits for Activity    │
+                    │ on stdin and socket            │
+                    └──────────────┬─────────────────┘
+                                   │
+                                   ▼
+                     ┌────────────────────────────┐
+                     │ Any Input Available ?      │
+                     └─────────────┬──────────────┘
+                                   │
+                    ┌──────────────┴──────────────┐
+                    │                             │
+                    ▼                             ▼
+        ┌────────────────────┐      ┌────────────────────┐
+        │ User Typed Message │      │ Server Sent Msg    │
+        │ (stdin ready)      │      │ (socket ready)     │
+        └─────────┬──────────┘      └─────────┬──────────┘
+                  │                           │
+                  ▼                           ▼
+        ┌────────────────────┐      ┌────────────────────┐
+        │ Read Keyboard Input│      │ Receive Data       │
+        │ readline()         │      │ recv()             │
+        └─────────┬──────────┘      └─────────┬──────────┘
+                  │                           │
+                  ▼                           ▼
+        ┌────────────────────┐      ┌────────────────────┐
+        │ Encode Message     │      │ Data Received ?    │
+        │ msg.encode()       │      └─────────┬──────────┘
+        └─────────┬──────────┘                │
+                  │                  ┌────────┴─────────┐
+                  │                  │                  │
+                  ▼                 NO                 YES
+        ┌────────────────────┐       │                  │
+        │ Send to Server     │       ▼                  ▼
+        │ s.send()           │ ┌───────────────┐ ┌────────────────┐
+        └─────────┬──────────┘ │ Print         │ │ Display Msg    │
+                  │            │ Disconnected  │ │ on Screen      │
+                  │            │ Exit Program  │ └───────┬────────┘
+                  │            └───────────────┘         │
+                  ▼                                      ▼
+        ┌────────────────────┐              ┌────────────────────┐
+        │ Display Prompt ">" │              │ Display Prompt ">" │
+        └─────────┬──────────┘              └─────────┬──────────┘
+                  │                                   │
+                  └───────────────┬───────────────────┘
+                                  │
+                                  ▼
+                         ┌─────────────────┐
+                         │ Back to select()│
+                         └─────────────────┘
 ```
 
 ---
@@ -508,124 +628,4 @@ One server process can handle many clients efficiently.
 **The server acts as a central hub: it accepts client connections, monitors all connected clients using `select()`, receives messages with `recv()`, and distributes them to all other clients through `broadcast()`.**
 
 
-### Key idea: select() continuously watches all sockets in SOCKET_LIST. When a new client connects, accept() creates a client socket. When a client sends a message, recv() receives it and broadcast() forwards it to all other connected clients.
-
-
-
-### 2. Client side chat 
-```text
-┌─────────────────────────┐
-│          START          │
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│ Import Required Modules │
-│ sys, socket, select     │
-└────────────┬────────────┘
-             │
-             ▼
-┌─────────────────────────┐
-│ Check Command Line Args │
-│ len(sys.argv) < 3 ?     │
-└────────────┬────────────┘
-             │
-      ┌──────┴──────┐
-      │             │
-     YES            NO
-      │             │
-      ▼             ▼
-┌─────────────────┐  ┌────────────────────┐
-│ Print Usage Msg │  │ Read Host & Port   │
-└─────────────────┘  └─────────┬──────────┘
-                               │
-                               ▼
-                  ┌────────────────────────┐
-                  │ Create TCP Socket      │
-                  │ socket(AF_INET,        │
-                  │ SOCK_STREAM)           │
-                  └───────────┬────────────┘
-                              │
-                              ▼
-                  ┌────────────────────────┐
-                  │ Set Timeout = 5 Sec    │
-                  └───────────┬────────────┘
-                              │
-                              ▼
-                  ┌────────────────────────┐
-                  │ Connect to Server      │
-                  │ s.connect(host,port)   │
-                  └───────────┬────────────┘
-                              │
-                    ┌─────────┴─────────┐
-                    │                   │
-                 FAILED             SUCCESS
-                    │                   │
-                    ▼                   ▼
-         ┌─────────────────┐   ┌─────────────────┐
-         │ Print Error Msg │   │ Print Connected │
-         │ Exit Program    │   │ Message         │
-         └─────────────────┘   └────────┬────────┘
-                                         │
-                                         ▼
-                          ┌────────────────────────┐
-                          │ Show Prompt ">"        │
-                          └───────────┬────────────┘
-                                      │
-                                      ▼
-                         ┌─────────────────────────┐
-                         │      while True         │
-                         └───────────┬─────────────┘
-                                     │
-                                     ▼
-                    ┌────────────────────────────────┐
-                    │ select() Waits for Activity    │
-                    │ on stdin and socket            │
-                    └──────────────┬─────────────────┘
-                                   │
-                                   ▼
-                     ┌────────────────────────────┐
-                     │ Any Input Available ?      │
-                     └─────────────┬──────────────┘
-                                   │
-                    ┌──────────────┴──────────────┐
-                    │                             │
-                    ▼                             ▼
-        ┌────────────────────┐      ┌────────────────────┐
-        │ User Typed Message │      │ Server Sent Msg    │
-        │ (stdin ready)      │      │ (socket ready)     │
-        └─────────┬──────────┘      └─────────┬──────────┘
-                  │                           │
-                  ▼                           ▼
-        ┌────────────────────┐      ┌────────────────────┐
-        │ Read Keyboard Input│      │ Receive Data       │
-        │ readline()         │      │ recv()             │
-        └─────────┬──────────┘      └─────────┬──────────┘
-                  │                           │
-                  ▼                           ▼
-        ┌────────────────────┐      ┌────────────────────┐
-        │ Encode Message     │      │ Data Received ?    │
-        │ msg.encode()       │      └─────────┬──────────┘
-        └─────────┬──────────┘                │
-                  │                  ┌────────┴─────────┐
-                  │                  │                  │
-                  ▼                 NO                 YES
-        ┌────────────────────┐       │                  │
-        │ Send to Server     │       ▼                  ▼
-        │ s.send()           │ ┌───────────────┐ ┌────────────────┐
-        └─────────┬──────────┘ │ Print         │ │ Display Msg    │
-                  │            │ Disconnected  │ │ on Screen      │
-                  │            │ Exit Program  │ └───────┬────────┘
-                  │            └───────────────┘         │
-                  ▼                                      ▼
-        ┌────────────────────┐              ┌────────────────────┐
-        │ Display Prompt ">" │              │ Display Prompt ">" │
-        └─────────┬──────────┘              └─────────┬──────────┘
-                  │                                   │
-                  └───────────────┬───────────────────┘
-                                  │
-                                  ▼
-                         ┌─────────────────┐
-                         │ Back to select()│
-                         └─────────────────┘
-```text
+**Key idea: select() continuously watches all sockets in SOCKET_LIST. When a new client connects, accept() creates a client socket. When a client sends a message, recv() receives it and broadcast() forwards it to all other connected clients.**

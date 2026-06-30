@@ -3,7 +3,7 @@
 ## Flow Chart
 
 ### 1. Server side chat 
-
+```text
 ┌─────────────────────────┐
 │          START          │
 └────────────┬────────────┘
@@ -174,6 +174,7 @@ broadcast(server_socket,
                          │
                          ▼
                      Continue
+```text
               
 ## Overall Chat Server Architecture Explanation
 
@@ -512,7 +513,7 @@ One server process can handle many clients efficiently.
 
 
 ### 2. Client side chat 
-
+```text
 ┌─────────────────────────┐
 │          START          │
 └────────────┬────────────┘
@@ -627,3 +628,4 @@ One server process can handle many clients efficiently.
                          ┌─────────────────┐
                          │ Back to select()│
                          └─────────────────┘
+```text
